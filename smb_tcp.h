@@ -14,11 +14,26 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#ifdef __cpluplus
-extern "C" {
-#endif
+/*
+ * This is the base class for the SMB_TCP logic.
+ * All network logic will utilize this class
+ */
+class SMB3_Tcp
+{
+        public:
+                SMB_Tcp();
+                ~SMB3_Tcp();
+                SMB3_Tcp(SMB_Tcp &SMB_Tcp const);
+                int socket_init(int port);
+                
+
+        private:
+                int tcp_port;
+                int err;
+                char *smb_error_msg;
+                
 
 
-// Socket init information
-typedef struct smb_sock_init {
 
+
+};
