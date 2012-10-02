@@ -79,4 +79,70 @@ typedef struct SMB2_Negotiate_Response {
 	uint32_t max_write_size;
 	uint64_t system_time; /* must be specified in FILETIME format */
 	uint64_t server_start_time; /* Mus be specified in FILETIME format */
-	
+	/* The offset (in bytes) from the beginning of the SMB2 header to the 
+	 * security buffer
+	 */
+	uint16_t security_buffer_offset;
+	uint16_t security_buffer_length;
+	uint32_t reserved;
+	/* variable-length buffer, contains security_buffer_offset and
+	 * security_buffer_length. The buffer should contain a token as given
+	 * by the GSS protocol. If security_buffer_lenght is 0, this field is
+	 * then client-initiated authentication with and authentication protocol 	 * of the client's choice, will be used instead of server-initiated
+	 * SPNEGO authentication.
+	 */
+	void *buffer;
+}SMB2_NEGOTIATE_RESPONSE, PSMB2_NEGOTIATE_RESPONSE;
+
+/* This define is used in the flag field for the SMB2_Session_Setup_Request 
+ * struct
+ */
+#define SMB2_SESSION_FLAG_BINDING 0x01
+
+/* Defines for use in the Security mode field in SMB2_Session_Setup_Request
+ * struct.
+ */
+#define SMB2_NEGOTIATE_SIGNING_ENABLED 0x01
+#define SMB2_NEGOTIATE_SIGNING_REQUIRED 0x02
+
+/* 
+ * These defines should be used in the capabilities field in the following
+ * struct. The field specifies protocol capabilities for the client. The
+ * SMB2_GLOBAL_CAPS_DFS has already been defined earlier in the file. The below
+ * defines SHOULD be set to 0 and the server MUST IGNORE them.
+ */
+#define SMB2_GLOBAL_CAP_UNUSED1 0x00000002
+#define SMB2_GLOBAL_CAP_UNUSED2 0x00000004
+#define SMB2_GLOBAL_CAP_UNUSED3 0x00000008
+
+/*
+ * The SMB2 SESSION_SETUP Reaquest packet is sent by the client to request a new * authenticated session within a new or existing SMB2 protocol transport
+ * connection to the server. This request is composed of an SMB2 header.
+ */
+typedef struct SMB2_Session_Setup_Request {
+	uint16_t structure_size;
+	/* If the client implements SMB3.0, the flags field MUST be set to
+	 * combination of zero or more of the following values. Otherwise it 
+	 * MUST be set to 0.
+	 */
+	uint16_t flags:8;
+	uint16_t security_mode:8;
+	uint32_t capabilities;
+	/* The channel field MUST NOT be used and MUST be reserved. The client
+	 * MUST set this to 0 and the server must ignore it on reciept.
+	 */
+	uint32_t channel;
+	uint16_t security_buffer_offset;
+	uint16_t security_buffer_length;
+	uint64_t previous_session_id;
+	/* variable-length buffer, contains security buffer for the request, as
+	 * specified by security_buffer_offset and security_buffer_length. If 
+	 * server initiated authentication using SPNEGO, the buffer must 
+	 * contain a token the GSS protocol. The buffer SHOULD contain a token 
+	 * produced by an authentication protocol of client's choice.
+	 */
+	void *buffer;
+}SMB2_SESSION_SETUP_REQUEST, PSMB2_SESSION_SETUP_REQUEST;
+
+typedef SMB2_SESSION_SETUP_RESPONSE {
+
