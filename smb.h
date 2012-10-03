@@ -431,8 +431,173 @@ typedef struct SMB2_Create_Durable_Handle_Request {
 	uint128_t durable_request;
 }SMB2_CREATE_DURABLE_HANDLE_REQUEST, PSMB2_CREATE_DURABLE_HANDLE_REQUEST;
 
-typedef struct SMB_Create_Durable_Handle_Request {
+typedef struct SMB2_Create_Durable_Handle_Request {
 	SMB2_FILEID data; // needs to be an SMB2_FILEID structure
-}SMB2_CREATE_DURABLE_HANDLE_REQUEST, PSMB2_CREATE_DURABLE_ANDLE_REQUEST;
+}SMB2_CREATE_DURABLE_HANDLE_REQUEST, PSMB2_CREATE_DURABLE_HANDLE_REQUEST;
+
+typedef struct SMB2_Create_Durable_Handle_Reconnect {
+	SMB2_FILEID data;
+}SMB2_CREATE_DURABLE_HANDLE_RECONNECT, PSMB2_CREATE_DURABLE_HANDLE_RECONNECT;
+
+/*
+ * When the client is requesting the server to retrieve maximal access info as
+ * part of processing the open. The Data in the buffer field of the
+ * SMB2_CREATE_CONTEXT MUST either contain the following structure or empty
+ */
+typedef struct SMB2_Create_Query_Maximal_Access_Request {
+	uint64_t timestamp;
+}SMB2_CREATE_QUERY_MAX_ACCESS_REQUEST, PSMB2_CREATE_QUERY_MAX_ACCESS_REQUEST;
+
+/*
+ * The SMB2_CREATE_ALLOCATION_SIZE context is specified on an
+ * SMB2_CREATE_REQUEST when the client is setting the allocation size of a file
+ * that is being newly created or overwritten. The data in the buffer field of 
+ * the SMB2_CREATE_CONTEXT MUST be the following structure.
+ */
+typedef struct SMB2_Create_Allocation_Size {
+	uint32_t allocation_size;
+}SMB2_CREATE_ALLOCATION_SIZE, PSMB2_CREATE_ALLOCATION_SIZE;
+
+/*
+ * The SMB2_CREATE_TIMEWARP_TOKEN context is specified on an
+ * SMB2_CREATE_REQUEST when the client is requesting the server to open a
+ * version of the file at a previous point in time. The Data in the buffer
+ * field of the SMB2_CREATE_CONTEXT MUST contain the following structure.
+ */
+typedef struct SMB2_Create_Timewarp_Token {
+	uint32_t timestamp;
+}SMB2_CREATE_TIMEWARP_TOKEN, PSMB2_CREATE_TIMEWARP_TOKEN;
+
+/*
+ * The SMB2_CREATE_REQUEST_LEASE context is specfied on an SMB2_CREATE_REQUEST
+ * packet when the client is requesting the server to return a lease. The 
+ * value is not valid for the SMB 2.002 dialect. The data in the buffer field
+ * of the SMB2_CREATE_CONTEXT structure MUST contain the following structure.
+ */
+#define SMB2_LEASE_NONE 0x00
+#define SMB2_LEASE_READ_CACHING 0x01
+#define SMB2_LEASE_HANDLE_CACHING 0x02
+#define SMB2_LEASE_WRITE_CACHING 0x04
+
+typedef struct SMB2_Create_Request_Lease {
+	uint128_t lease_key;
+	uint32_t lease_state;
+	uint32_t lease_flags;
+	uint64_t lease_duration;
+}SMB2_CREATE_REQUEST_LEASE, PSMB2_CREATE_REQUEST_LEASE;
+
+/*
+ * The SMB2_CREATE_REQUEST_LEASE_V2 context is specified on an
+ * SMB2_CREATE_REQUEST when the client is requesting the server to return
+ * a lease on a file or a directory. This is only valid for the SMB3.0 dialect.
+ * The data is the buffer field of the SMB2_CREATE_CONTEXT structure MUST
+ * contain the following structure.
+ */
+#define SMB2_LEASE_FLAG_PARENT_LEASE_KEY_SET 0x00000004
+
+typedef struct SMB2_Create_Request_Lease_V2 {
+	uint128_t lease_key;
+	uint32_t lease_state;
+	uint32_t flags;
+	uint64_t lease_duration;
+	uint128_t parent_lease_key;
+	uint16_t epoch;
+	uint16_t reserved;
+}SMB2_CREATE_REQUEST_LEASE_V2, PSMB2_CREATE_REQUEST_LEASE_V2;
+
+/*
+ * The SMB2_CREATE_DURABLE_HANDLE_REQUEST_V2 context is only valid for the 
+ * SMB3.0 dialect. When the client is not requesting a persistant handle, the
+ * client SHOULD also request a batch OPLOCK or a handle caching lease. The
+ * format of the data in the buffer field for this SMB2_CREATE_CONTEXT MUST be
+ * as the following struct.
+ */
+#define SMB2_DHANDLE_FLAG_PERSISTENT 0x00000002
+
+typedef struct SMB2_Create_Durable_Handle_Request_V2 {
+	uint32_t timeout;
+	uint32_t flags;
+	uint64_t reserved;
+	uint128_t create_guid;
+}SMB2_CREATE_DHANDLE_REQUEST_V2, PSMB2_CREATE_DHANDLE_REQUEST_V2;
+
+/*
+ * The SMB2_CREATE_DURABLE_HANDLE_RECONNECT_V2 context is specified when the 
+ * client is attempting to reestablish a durable open. The 
+ * SMB2_CREATE_DURABLE_HANDLE_RECONNECT_V2 context is only valid for the SMB3.0
+ * dialect.
+ */
+typedef struct SMB2_Create_Durable_Handle_Reconnect_V2 {
+	SMB2_FILEID file_id;
+	uint128_t create_guid;
+	uint16_t flags;
+}SMB2_CREATE_DHANDLE_RECONNECT_V2, PSMB2_CREATE_DHANDLE_RECONNECT_V2;
+
+/*
+ * The SMB2_CREATE_APP_INSTANCE_ID context is specified on an 
+ * SMB2_CREATE_REQUEST when the client is supplying an identifier provided
+ * by an application. The SMB2_CREATE_APP_INSTANCE_ID context is only valid for
+ * the SMB3.0 dialect. The client should also request a durable handle by using
+ * an SMB2_CREATE_DURABLE_HANDLE_REQUEST_V2 or
+ *  SMB2_CREATE_DURABLE_HANDLE_RECONNECT_V2 create context.
+ */
+typedef struct SMB2_Create_App_Instance_Id {
+	uint16_t structure_size:8;
+	uint16_t reserved:8;
+	uint128_t app_instance_id;
+}SMB2_CREATE_APP_INSTANCE_ID, PSMB2_CREATE_APP_INSTANCE_ID;
+
+/*
+ * The SMB2 CREATE response packet is sent by the server to notify the client of
+ * the client of the status of its SMB2_CREATE_REQUEST. This response is 
+ * composed of an SMB2 header followed by this response structure.
+ */
+#define SMB2_CREATE_FLAG_REPARSEPOINT 0x01
+
+typedef struct SMB2_Create_Response {
+	uint16_t structure_size; // The server MUST set this field to 89
+	uint16_t oplock_lvl:8;
+	uint16_t flags:8;
+	uint32_t create_action;
+	uint64_t creation_time;
+	uint64_t last_access_time;
+	uint64_t last_write_time;
+	uint64_t change_time;
+	uint64_t allocation_size;
+	uint64_t end_of_file;
+	uint32_t file_attributes;
+	uint32_t reserved2;
+	SMB2_FILEID file_id;
+	uint32_t create_contexts_offset;
+	uint32_t create_contexts_length;
+	/*
+	 * variable-length buffer that contains the list of create contexts
+	 * that are contained in this response, as described by
+	 * create_contexts_offset and create_contexts_length. This takes the
+	 * form of a list SMB2_CREATE_CONTEXT_RESPONSE values.
+	 */
+	void *buffer;
+}SMB2_CREATE_RESPONSE, PSMB2_CREATE_RESPONSE;
+
+/*
+ * The SMB2 FILEID is used to represent an open to a file
+ */
+typedef struct SMB2_File_Id {
+	/* A file handle that remains persistent when an open is reconnected
+	 * after being lost on a disconnect. The server MUST return this file
+	 * handle as part of an SMB2_CREATE_RESPONSE. If the open is a durable
+	 * open, this value MUST be globally unique. If the open is not a
+	 * durable open, this value MUST be unique for all persistent handles
+	 * on that SMB2 transport connection.
+	 */
+	uint64_t persistent;
+	/* A file handle that can be changed when an open is reconnected
+	 * after being lost on a disconnect. The server MUST return this file
+	 * handle as part of an SMB2_CREATE_RESPONSE. This value MUST NOT
+	 * change unless a reconnection is performed. This value MUST be
+	 * unique for all volatile handles on the SMB2 transport connection.
+	 */
+	uint64_t volatile;
+}SMB2_FILE_ID, PSMB2_FILE_ID;
 
 
