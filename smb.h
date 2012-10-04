@@ -600,4 +600,81 @@ typedef struct SMB2_File_Id {
 	uint64_t volatile;
 }SMB2_FILE_ID, PSMB2_FILE_ID;
 
+typedef struct SMB2_Create_Durable_Handle_Response {
+	uint32_t reserved[1];
+}SMB2_CREATE_DHANDLE_RESPONSE, PSMB2_CREATE_DHANDLE_RESPONSE;
+
+/*
+ * If the server attempts to query maximal access as part of processing a
+ * create request, it MUST return the results of the query to client by
+ * including an SMB2_CREATE_QUERY_MAXIMAL_ACCESS_RESPONSE context in response.
+ */
+typedef struct SMB2_Create_Query_Maximal_Access_Response {
+	uint32_t query_status;
+	uint32_t maximal_access;
+}SMB2_CREATE_QUERY_MAX_ACCESS_RESPONSE, PSMB2_CREATE_QUERY_MAX_ACCESS_RESPONSE;
+
+/* SMB2_CREATE_QUERY_ON_DISK_ID
+ * 
+ * The server responds with a 32-byte value that the client can use to identify
+ * the open file. The SMB2_CREATE_QUERY_ON_DISK_ID returns an 
+ * SMB2_CREATE_CONTEXT in the response with the Name that is identified by
+ * SMB2_CREATE_QUERY_ON_DISK_ID.
+ */
+typedef struct SMB2_Create_Query_On_Disk_Id {
+	uint32_t disk_id_buffer[7];
+}SMB2_CREATE_QUERY_ON_DISK_ID, PSMB2_CREATE_QUERY_ON_DISK_ID;
+
+/* SMB2_CREATE_RESPONSE_LEASE
+ * The server responds with a lease that is granted for this open. The data in 
+ * the buffer field of the SMB2_CREATE_CONTEXT structure MUST contain the
+ * following structure.
+ */
+#define SMB2_LEASE_FLAG_BREAK_IN_PROGRESS 0x02
+
+typedef struct SMB2_Create_Response_Lease {
+	uint32_t lease_key[3];
+	uint32_t lease_state;
+	/* 
+	 * If the server implements the SMB2.1 or SMB3.0 dialect, this field
+	 * MUST be set to 0 or more of the following values. Otherwise, it is
+	 * unused and MUST be reserved; the server MUST set this to 0, client
+	 * ignore it.
+	 */
+	uint32_t lease_flags;
+	/*
+	 * This field MUST NOT be used, MUST be reserved. The server MUST
+	 * set this to 0, and the client MUST ignore it on receipt.
+	 */
+	uint32_t lease_duration[1];
+}SMB2_CREATE_RESPONSE_LEASE, PSMB2_CREATE_RESPONSE_LEASE;
+
+/* SMB2_CREATE_RESPONSE_LEASE_V2
+ *  The server responds with a lease that is granted for this open. The data
+ *  in the buffer field of the SMB2_CREATE_CONTEXT structure MUST contain the 
+ *  following structure. This context is only valid for the SMB3.0 dialect.
+ */
+typedef struct SMB2_Create_Response_Lease_V2 {
+	uint32_t lease_key[3];
+	uint32_t lease_state;
+	uint32_t flags;
+	uint32_t lease_duration[1];
+	uint32_t parent_key[3];
+	// A 16-bit unsigned integer incremented by the server on a lease
+	// state change
+	uint32_t epoch:16;
+	uint32_t reserved:16;
+}SMB2_CREATE_RESPONSE_LEASE_V2, PSMB2_CREATE_RESPONSE_LEASE_V2;
+
+/* SMB2_CREATE_DHANDLE_RESPONSE_V2
+ * If the server succeeds in opening a durable handle to a file as requested
+ * by the client via the SMB2_CREATE_DHANDLE_REQUEST_V2, it MUST send an 
+ * SMB2_CREATE_DHANDLE_RESPONSE_V2 back to the client to inform the client
+ * that the handle is durable. The SMB2_CREATE_DHANDLE_RESPONSE_V2 context is
+ * only valid for the SMB3.0 dialect.
+ */
+typedef struct SMB2_Create_Durable_Handle_Response_V2 {
+	uint32_t timeout;
+	uint32_t flags;
+}SMB2_CREATE_DHANDLE_RESPONSE_V2, PSMB2_CREATE_DHANDLE_RESPONSE_V2;
 
