@@ -432,7 +432,7 @@ typedef struct SMB2_Create_Durable_Handle_Request {
 }SMB2_CREATE_DURABLE_HANDLE_REQUEST, PSMB2_CREATE_DURABLE_HANDLE_REQUEST;
 
 typedef struct SMB2_Create_Durable_Handle_Reconnect {
-	SMB2_FILEID data;
+	SMB2_FILEID data; // 16-bytes
 }SMB2_CREATE_DURABLE_HANDLE_RECONNECT, PSMB2_CREATE_DURABLE_HANDLE_RECONNECT;
 
 /*
@@ -441,7 +441,7 @@ typedef struct SMB2_Create_Durable_Handle_Reconnect {
  * SMB2_CREATE_CONTEXT MUST either contain the following structure or empty
  */
 typedef struct SMB2_Create_Query_Maximal_Access_Request {
-	uint64_t timestamp;
+	uint32_t timestamp[1]; // in FILETIME format, see MS-DTYP:2.3.1
 }SMB2_CREATE_QUERY_MAX_ACCESS_REQUEST, PSMB2_CREATE_QUERY_MAX_ACCESS_REQUEST;
 
 /*
@@ -451,7 +451,7 @@ typedef struct SMB2_Create_Query_Maximal_Access_Request {
  * the SMB2_CREATE_CONTEXT MUST be the following structure.
  */
 typedef struct SMB2_Create_Allocation_Size {
-	uint32_t allocation_size;
+	uint32_t allocation_size[1];
 }SMB2_CREATE_ALLOCATION_SIZE, PSMB2_CREATE_ALLOCATION_SIZE;
 
 /*
@@ -461,7 +461,7 @@ typedef struct SMB2_Create_Allocation_Size {
  * field of the SMB2_CREATE_CONTEXT MUST contain the following structure.
  */
 typedef struct SMB2_Create_Timewarp_Token {
-	uint32_t timestamp;
+	uint32_t timestamp[1]; // in FILETIME format
 }SMB2_CREATE_TIMEWARP_TOKEN, PSMB2_CREATE_TIMEWARP_TOKEN;
 
 /*
@@ -476,10 +476,10 @@ typedef struct SMB2_Create_Timewarp_Token {
 #define SMB2_LEASE_WRITE_CACHING 0x04
 
 typedef struct SMB2_Create_Request_Lease {
-	uint128_t lease_key;
+	uint32_t lease_key[3];
 	uint32_t lease_state;
 	uint32_t lease_flags;
-	uint64_t lease_duration;
+	uint32_t lease_duration[1];
 }SMB2_CREATE_REQUEST_LEASE, PSMB2_CREATE_REQUEST_LEASE;
 
 /*
@@ -492,13 +492,13 @@ typedef struct SMB2_Create_Request_Lease {
 #define SMB2_LEASE_FLAG_PARENT_LEASE_KEY_SET 0x00000004
 
 typedef struct SMB2_Create_Request_Lease_V2 {
-	uint128_t lease_key;
+	uint32_t lease_key[3];
 	uint32_t lease_state;
 	uint32_t flags;
-	uint64_t lease_duration;
-	uint128_t parent_lease_key;
-	uint16_t epoch;
-	uint16_t reserved;
+	uint32_t lease_duration[1];
+	uint32_t parent_lease_key[3];
+	uint32_t epoch:16;
+	uint32_t reserved:16;
 }SMB2_CREATE_REQUEST_LEASE_V2, PSMB2_CREATE_REQUEST_LEASE_V2;
 
 /*
@@ -513,8 +513,8 @@ typedef struct SMB2_Create_Request_Lease_V2 {
 typedef struct SMB2_Create_Durable_Handle_Request_V2 {
 	uint32_t timeout;
 	uint32_t flags;
-	uint64_t reserved;
-	uint128_t create_guid;
+	uint32_t reserved[1];
+	uint32_t create_guid[3];
 }SMB2_CREATE_DHANDLE_REQUEST_V2, PSMB2_CREATE_DHANDLE_REQUEST_V2;
 
 /*
@@ -525,8 +525,8 @@ typedef struct SMB2_Create_Durable_Handle_Request_V2 {
  */
 typedef struct SMB2_Create_Durable_Handle_Reconnect_V2 {
 	SMB2_FILEID file_id;
-	uint128_t create_guid;
-	uint16_t flags;
+	uint32_t create_guid[3];
+	uint32_t flags:16;
 }SMB2_CREATE_DHANDLE_RECONNECT_V2, PSMB2_CREATE_DHANDLE_RECONNECT_V2;
 
 /*
@@ -538,9 +538,9 @@ typedef struct SMB2_Create_Durable_Handle_Reconnect_V2 {
  *  SMB2_CREATE_DURABLE_HANDLE_RECONNECT_V2 create context.
  */
 typedef struct SMB2_Create_App_Instance_Id {
-	uint16_t structure_size:8;
-	uint16_t reserved:8;
-	uint128_t app_instance_id;
+	uint32_t structure_size:8;
+	uint32_t reserved:8;
+	uint32_t app_instance_id[3];
 }SMB2_CREATE_APP_INSTANCE_ID, PSMB2_CREATE_APP_INSTANCE_ID;
 
 /*
@@ -551,19 +551,19 @@ typedef struct SMB2_Create_App_Instance_Id {
 #define SMB2_CREATE_FLAG_REPARSEPOINT 0x01
 
 typedef struct SMB2_Create_Response {
-	uint16_t structure_size; // The server MUST set this field to 89
-	uint16_t oplock_lvl:8;
-	uint16_t flags:8;
+	uint32_t structure_size:16; // The server MUST set this field to 89
+	uint32_t oplock_lvl:8;
+	uint32_t flags:8;
 	uint32_t create_action;
-	uint64_t creation_time;
-	uint64_t last_access_time;
-	uint64_t last_write_time;
-	uint64_t change_time;
-	uint64_t allocation_size;
-	uint64_t end_of_file;
+	uint32_t creation_time[1];
+	uint32_t last_access_time[1];
+	uint32_t last_write_time[1];
+	uint32_t change_time[1];
+	uint32_t allocation_size[1];
+	uint32_t end_of_file[1];
 	uint32_t file_attributes;
 	uint32_t reserved2;
-	SMB2_FILEID file_id;
+	SMB2_FILEID file_id; // 16-bytes
 	uint32_t create_contexts_offset;
 	uint32_t create_contexts_length;
 	/*
@@ -572,7 +572,7 @@ typedef struct SMB2_Create_Response {
 	 * create_contexts_offset and create_contexts_length. This takes the
 	 * form of a list SMB2_CREATE_CONTEXT_RESPONSE values.
 	 */
-	void *buffer;
+	uint32_t *buffer;
 }SMB2_CREATE_RESPONSE, PSMB2_CREATE_RESPONSE;
 
 /*
@@ -586,14 +586,14 @@ typedef struct SMB2_File_Id {
 	 * durable open, this value MUST be unique for all persistent handles
 	 * on that SMB2 transport connection.
 	 */
-	uint64_t persistent;
+	uint32_t persistent[1];
 	/* A file handle that can be changed when an open is reconnected
 	 * after being lost on a disconnect. The server MUST return this file
 	 * handle as part of an SMB2_CREATE_RESPONSE. This value MUST NOT
 	 * change unless a reconnection is performed. This value MUST be
 	 * unique for all volatile handles on the SMB2 transport connection.
 	 */
-	uint64_t volatile;
+	uint32_t volatile[1];
 }SMB2_FILE_ID, PSMB2_FILE_ID;
 
 typedef struct SMB2_Create_Durable_Handle_Response {
@@ -674,3 +674,115 @@ typedef struct SMB2_Create_Durable_Handle_Response_V2 {
 	uint32_t flags;
 }SMB2_CREATE_DHANDLE_RESPONSE_V2, PSMB2_CREATE_DHANDLE_RESPONSE_V2;
 
+/* SMB2_CLOSE_REQUEST
+ * The SMB2 CLOSE request packet is used by the client to close an instance of 
+ * a instance of a file that was opened previously with a successful 
+ * SMB2 CREATE REQUEST. This request is composed of an SMB2 header, as
+ * specified by the following structure.
+ */
+#define SMB2_CLOSE_FLAG_POSTQUERY_ATTRIB 0x0001
+
+typedef struct SMB2_Close_Request {
+	uint32_t structure_size:16;
+	uint32_t flags:16; //if set, server must set attributes in response
+	uint32_t reserved;
+	SMB2_FILEID file_id; // 16-bytes
+}SMB2_CLOSE_REQUEST, PSMB2_CLOSE_REQUEST;
+
+/* SMB2_CLOSE_RESPONSE
+ * The SMB2 CLOSE response packet is sent by the server to indicate that an
+ * SMB2 CLOSE Request was processed successfully. The response consists
+ * of an SMB2 header and the SMB2_CLOSE_RESPONSE structure.
+ */
+
+typedef struct SMB2_Close_Response {
+	uint32_t structure_size:16;
+	uint32_t flags:16;
+	uint32_t creation_time[1];
+	uint32_t last_access_time[1];
+	uint32_t last_write_time[1];
+	uint32_t change_time[1];
+	uint32_t allocation_size[1];
+	uint32_t end_of_file[1];
+	uint32_t file_attr;
+}SMB2_CLOSE_RESPONSE, PSMB2_CLOSE_RESPONSE;
+
+/* SMB2_FLUSH_REQUEST
+ * The SMB2 FLUSH Request packet is sent by a client to request that a server
+ * flush all cached file information for a specified open of a file to the
+ * persistant store that backs the file. If the open refers to a named pipe,
+ * the operation will complete once all data written to the pipe has been
+ * consumed by the reader. This request is composed of an SMB2 header and the
+ * SMB2_FLUSH_REQUEST structure.
+ */
+typedef struct SMB2_Flush_Request {
+	uint32_t structure_size:16;
+	uint32_t reserved1:16;
+	uint32_t reserved2;
+	SMB2_FILEID file_id;
+}SMB2_FLUSH_REQUEST, PSMB2_FLUSH_REQUEST;
+
+/* SMB2_FLUSH_RESPONSE
+ * THe SMB2 Flush response packet is sent by the server to confirm a flush
+ * request was sucessfully processed. 
+ */
+typedef struct SMB2_Flush_Response {
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
+}SMB2_FLUSH_RESPONSE, PSMB2_FLUSH_RESPONSE;
+
+/* SMB2_READ_REQUEST
+ * The SMB2 READ Request packet is sent by the client to request a read
+ * operation on the file that is specified by the file_id. This request
+ * is composed of an SMB2 header followed by this request structure.
+ */
+typedef struct SMB2_Read_Request {
+	uint32_t structure_size:16;
+	uint32_t padding:8;
+	uint32_t reserved:8;
+	uint32_t length;
+	uint32_t offset[1];
+	SMB2_FILEID file_id;
+	uint32_t min_count;
+	uint32_t channel;
+	uint32_t read_channel_info_offset:16;
+	uint32_t read_channel_info_length:16;
+	
+	uint32_t *buffer;
+}SMB2_READ_REQUEST, PSMB2_READ_REQUEST;
+
+#define SMB2_CHANNEL_NONE 0x00000000
+#define SMB2_CHANNEL_RDMA_V1 0x00000001
+
+typedef struct SMB2_Read_Response {
+	uint32_t structure_size;
+	uint32_t data_offset:8;
+	uint32_t reserved:8;
+	uint32_t data_lenth;
+	uint32_t data_remaining;
+	uint32_t reserved2;
+
+	uint32_t *buffer;
+}SMB2_READ_RESPONSE, PSMB2_READ_RESPONSE;
+
+/* SMB2_WRITE_REQUEST
+ * The SMB2 WRITE request packet is sent by the client to write data to the 
+ * file or named pipe on the server. This request consists of SMB2 header and
+ * the SMB2_WRITE_REQUEST structure.
+ */
+#define SMB2_WRITEFLAG_WRITE_THROUGH 0x00000001
+
+typedef struct SMB2_Write_Request {
+	uint32_t structure_size:16;
+	uint32_t data_offset:16;
+	uint32_t length;
+	uint32_t offset[1];
+	SMB2_FILEID file_id;
+	uint32_t channel;
+	uint32_t remaining_bytes;
+	uint32_t write_channel_info_offset:16;
+	uint32_t write_channel_info_length:16;
+	uint32_t flags;
+
+	uint32_t *buffer;
+}SMB2_WRITE_REQUEST, PSMB2_WRITE_REQUEST
