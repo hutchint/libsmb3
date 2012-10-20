@@ -262,7 +262,7 @@ typedef struct SMB2_Tree_Disconnect_Response {
 }SMB2_TREE_DISCONNECT_RESPONSE, PSMB2_TREE_DISCONNECT_RESPONSE;
 
 /* The different SMB2 OPLOCK types */
-#define SMB2_OPLOCK_LEVEL_NON 0x00
+#define SMB2_OPLOCK_LEVEL_NONE 0x00
 #define SMB2_OPLOCK_LEVEL_II 0x01
 #define SMB2_OPLOCK_LEVEL_EXCLUSIVE 0x08
 #define SMB2_OPLOCK_LEVEL_BATCH 0x09
@@ -785,4 +785,97 @@ typedef struct SMB2_Write_Request {
 	uint32_t flags;
 
 	uint32_t *buffer;
-}SMB2_WRITE_REQUEST, PSMB2_WRITE_REQUEST
+}SMB2_WRITE_REQUEST, PSMB2_WRITE_REQUEST;
+
+/* SMB2_WRITE_RESPONSE
+ * The SMB2 write response packet is sent in response to an SM2_WRITE_REQUEST
+ * packet. This response is composed of an SMB2 header and SMB2_WRITE_RESPONSE
+ * structure.
+ */
+typedef struct SMB2_Write_Response {
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
+	uint32_t count;
+	uint32_t remaining;
+	uint32_t write_channel_info_offset:16;
+	uint32_t write_channel_info_length:16;
+}SMB2_WRITE_RESPONSE, PSMB2_WRITE_RESPONSE;
+
+/* SMB2 OPLOCK_BREAK Notification
+ * The SMB2 Oplock Break Notification packet is sent by the server when the
+ * underlying object store indicates that an oplock is being broken, 
+ * representing a change in the oplock level. This message s composed of SMB2
+ * header followed by a SMB2_OPLOCK_BREAK_NOTIFICATION structure.
+ */
+typedef struct SMB2_Oplock_Break_Notification {
+	uint32_t structure_size:16;
+	uint32_t oplock_lvl:8;
+	uint32_t reserved:8;
+	uint32_t reserved2;
+	SMB2_FILEID file_id;
+}SMB2_OPLOCK_BREAK_NOTIFICATION, PSMB2_OPLOCK_BREAK_NOTIFICATION;
+
+/* SMB2_LEASE_BREAK_NOTIFICATION
+ * The SMB2 Lease Break Notification packet is sent by the server when the
+ * underlying object store indicates that a lease is being broken, representing
+ * a lease state. This notification is not valid for the SMB 2.002 dialect.
+ * The message is composed of an SMB2 header, followed by the
+ * SMB2_LEASE_OPLOCK_NOTIFICATION structure.
+ */
+#define SMB2_NOTIFY_BREAK_LEASE_FLAG_ACK_REQUIRED 0x01
+typedef struct SMB2_Lease_Break_Notification {
+	uint32_t structure_size:16;
+	uint32_t new_epoch:16;
+	uint32_t flags;
+	uint32_t lease_key[3];
+	uint32_t current_lease_state;
+	uint32_t new_lease_state;
+	uint32_t break_reason;
+	uint32_t access_mask_hint;
+	uint32_t share_mask_hint;
+}SMB2_LEASE_BREAK_NOTIFICATION, PSMB2_LEASE_BREAK_NOTIFICATION;
+
+/* SMB2_OPLOCK_BREAK_ACK
+ * The oplock break acknowledgment packet is sent by the client in response
+ * to an SMB2_OPLOCK_BREAK_NOTIFICATION packet sent by the server. The server
+ * responds to an oplock break acknowledgment with an SMB2_OPLOCK_BREAK
+ * response. The client MUST NOT send an oplock break acknowledgment for an
+ * oplock break from level II to none. A break from level II MUST transition
+ * to none. Thus, the client does not send a request to the server because
+ * there is no question how the transition was made.
+ */
+typedef struct SMB2_Oplock_Break_Acknowledgment {
+	uint32_t structure_size:16;
+	uint32_t oplock_lvl:8;
+	uint32_t reserved:8;
+	SMB2_FILEID file_id;
+}SMB2_OPLOCK_BREAK_ACK, PSMB2_OPLOCK_BREAK_ACK;
+
+/* SMB2_LEASE_BREAK_ACK
+ * The SMB2 Lease Break Acknowledgment packet is sent by the client in response
+ * to an SMB2_LEASE_BREAK_NOTIFICATION packet sent by the server. This 
+ * acknowledgment is not valid for the SMB 2.002 dialect. The server responds
+ * to a lease break ack with an SMB2_LEASE_BREAK_RESPONSE.
+ */
+typedef struct SMB2_Lease_Break_Acknowledgment {
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
+	uint32_t flags;
+	uint32_t lease_key[3];
+	uint32_t lease_state;
+	uint32_t lease_duration[1];
+}SMB2_LEASE_BREAK_ACK, PSMB2_LEASE_BREAK_ACK;
+
+/* SMB2_OPLOCK_BREAK_RESPONSE
+ * The OPLOCK_BREAK_RESPONSE packet is sent by the server in response to an 
+ * SMB2_OPLOCK_BREAK_ACK. The message is composed of an SMB2 header, and
+ * the SMB2_OPLOCK_BREAK_RESPONSE structure.
+ */
+typedef struct SMB2_Oplock_Break_Response {
+	uint32_t structure_size:16;
+	uint32_t oplock_lvl:8;
+	uint32_t reserved:8;
+	uint32_t reserved2;
+	SMB2_FILEID file_id;
+}SMB2_OPLOCK_BREAK_RESPONSE, PSMB2_OPLOCK_BREAK_RESPONSE;
+
