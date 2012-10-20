@@ -43,17 +43,17 @@ enum SMB_FLAGS {
 };
 
 typedef struct SMB2_Negotiate_Request {
-	uint16_t structure_size;
-	uint16_t dialect_count;
-	uint16_t security_mode;
-	uint16_t reserved;
+	uint32_t structure_size:16;
+	uint32_t dialect_count:16;
+	uint32_t security_mode:16;
+	uint32_t reserved:16;
 	uint32_t capabilities;
-	uint64_t client_guid;
-	uint32_t client_start_time;
+	uint32_t client_guid[3];
+	uint32_t client_start_time[1];
 	
 	// The following variable can store one or more 16bit integers that
 	// specif the supported SMB revision.
-	uint16_t *dialects[2];
+	uint32_t *dialects;
 }SMB2_NEGOTIATE_REQUEST, PSMB2_NEGOTIATE_REQUEST;
 
 /*
@@ -68,30 +68,30 @@ typedef struct SMB2_Negotiate_Request {
 #define SMB2_GLOBAL_CAP_ENCRYPTION 0x00000040
 
 typedef struct SMB2_Negotiate_Response {
-	uint16_t structure_size;
-	uint16_t security_mode;
-	uint16_t dialect_revision;
-	uint16_t reserved;
-	uint128_t server_guid;
+	uint32_t structure_size:16;
+	uint32_t security_mode:16;
+	uint32_t dialect_revision:16;
+	uint32_t reserved:16;
+	uint32_t server_guid[3];
 	uint32_t capabilities;	
 	uint32_t max_transact_size;
 	uint32_t max_read_size;
 	uint32_t max_write_size;
-	uint64_t system_time; /* must be specified in FILETIME format */
-	uint64_t server_start_time; /* Mus be specified in FILETIME format */
+	uint32_t system_time[1]; /* must be specified in FILETIME format */
+	uint32_t server_start_time[1]; /* Mus be specified in FILETIME format */
 	/* The offset (in bytes) from the beginning of the SMB2 header to the 
 	 * security buffer
 	 */
-	uint16_t security_buffer_offset;
-	uint16_t security_buffer_length;
-	uint32_t reserved;
+	uint32_t security_buffer_offset:16;
+	uint32_t security_buffer_length:16;
+	uint32_t reserved2;
 	/* variable-length buffer, contains security_buffer_offset and
 	 * security_buffer_length. The buffer should contain a token as given
 	 * by the GSS protocol. If security_buffer_lenght is 0, this field is
 	 * then client-initiated authentication with and authentication protocol 	 * of the client's choice, will be used instead of server-initiated
 	 * SPNEGO authentication.
 	 */
-	void *buffer;
+	uint32_t *buffer;
 }SMB2_NEGOTIATE_RESPONSE, PSMB2_NEGOTIATE_RESPONSE;
 
 /* This define is used in the flag field for the SMB2_Session_Setup_Request 
@@ -120,28 +120,28 @@ typedef struct SMB2_Negotiate_Response {
  * connection to the server. This request is composed of an SMB2 header.
  */
 typedef struct SMB2_Session_Setup_Request {
-	uint16_t structure_size;
+	uint32_t structure_size:16;
 	/* If the client implements SMB3.0, the flags field MUST be set to
 	 * combination of zero or more of the following values. Otherwise it 
 	 * MUST be set to 0.
 	 */
-	uint16_t flags:8;
-	uint16_t security_mode:8;
+	uint32_t flags:8;
+	uint32_t security_mode:8;
 	uint32_t capabilities;
 	/* The channel field MUST NOT be used and MUST be reserved. The client
 	 * MUST set this to 0 and the server must ignore it on reciept.
 	 */
 	uint32_t channel;
-	uint16_t security_buffer_offset;
-	uint16_t security_buffer_length;
-	uint64_t previous_session_id;
+	uint32_t security_buffer_offset:16;
+	uint32_t security_buffer_length:16;
+	uint32_t previous_session_id[1];
 	/* variable-length buffer, contains security buffer for the request, as
 	 * specified by security_buffer_offset and security_buffer_length. If 
 	 * server initiated authentication using SPNEGO, the buffer must 
 	 * contain a token the GSS protocol. The buffer SHOULD contain a token 
 	 * produced by an authentication protocol of client's choice.
 	 */
-	void *buffer;
+	uint32_t *buffer;
 }SMB2_SESSION_SETUP_REQUEST, PSMB2_SESSION_SETUP_REQUEST;
 
 // This flag, if set means client has bee auth'd as a guest user
@@ -150,10 +150,10 @@ typedef struct SMB2_Session_Setup_Request {
 #define SMB2_SESSION_FLAG_ENCRYPT_DATA 0x0004
 
 typedef SMB2_Session_Setup_Response {
-	uint16_t structure_size; // For server, this field MUST be set to 9
-	uint16_t session_flag;
-	uint16_t secuirty_buffer_offset;
-	uint16_t security_buffer_length;
+	uint32_t structure_size:16; // For server, this field MUST be set to 9
+	uint32_t session_flag:16;
+	uint32_t secuirty_buffer_offset:16;
+	uint32_t security_buffer_length:16;
 	/* variable-length, contains security buffer as response. Specified by
 	 * security_buffer_offset and security_buffer_length. If server
 	 * initiated authentication using SPNEGO, the buffer must contain a
@@ -161,17 +161,17 @@ typedef SMB2_Session_Setup_Response {
 	 * authentication, the buffer SHOULD contain the token of the client's
 	 * choice
 	 */
-	void *buffer;
+	uint32_t *buffer[1];
 }SMB2_SESSION_SETUP_RESPONSE, PSMB2_SESSION_SETUP_RESPONSE;
 
 typedef struct SMB2_Logoff_Request {
-	uint16_t structure_size;
-	uint16_t reserved;
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
 }SMB2_LOGOFF_REQUEST, PSMB2_LOGOFF_REQUEST;
 
 typedef struct SMB2_Logoff_Response {
-	uint16_t structure_size;
-	uint16_t reserved;
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
 }SMB2_LOGOFF_RESPONSE, PSMB2_LOGOFF_RESPONSE;
 
 /* The TREE_CONNECT Request packet is sent by a client to request access to a 
@@ -179,13 +179,13 @@ typedef struct SMB2_Logoff_Response {
  * Header that is followed by the below struct.
  */
 typedef struct SMB2_Tree_Connect_Request {
-	uint16_t structure_size;
-	uint16_t reserved;
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
 	/* The offset, in bytes, of the full share path name from the beginning
 	 * of the header.
 	 */
-	uint16_t path_offset;
-	uint16_t path_length; /* length of path name, in bytes */
+	uint32_t path_offset:16;
+	uint32_t path_length:16; /* length of path name, in bytes */
 	/*
 	 * Variable-length buffer that contains the path name of the share in 
 	 * Unicode in the form "\\server\share" for the request, as described
@@ -195,7 +195,7 @@ typedef struct SMB2_Tree_Connect_Request {
 	 * the path MUST be less than or equal to 80 characters in length. The 
 	 * share name MUST NOT contain invalid characters.
 	 */
-	void *buffer;
+	uint32_t *buffer;
 }SMB2_TREE_CONNECT_REQUEST, PSMB2_TREE_CONNECT_REQUEST;
 
 /* SMB2/3 share types */
@@ -233,9 +233,9 @@ typedef struct SMB2_Tree_Connect_Request {
  * followed by the response struct below.
  */
 typedef struct SMB2_Tree_Connect_Response {
-	uint16_t structure_size;
-	uint16_t share_type:8;
-	uint16_t reserved:8;
+	uint32_t structure_size:16;
+	uint32_t share_type:8;
+	uint32_t reserved:8;
 	uint32_t share_flags;
 	uint32_t capabilities;
 	uint32_t maximal_access;
@@ -247,8 +247,8 @@ typedef struct SMB2_Tree_Connect_Response {
  * header be disconnected. This request is composed of an SMB2 header.
  */
 typedef struct SMB2_Tree_Disconnect_Request {
-	uint16_t structure_size;
-	uint16_t reserved;
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
 }SMB2_TREE_DISCONNECT_REQUEST, PSMB2_TREE_DISCONNECT_REQUEST;
 
 /*
@@ -257,8 +257,8 @@ typedef struct SMB2_Tree_Disconnect_Request {
  * then followed by this structure.
  */
 typedef struct SMB2_Tree_Disconnect_Response {
-	uint16_t structure_size;
-	uint16_t reserved;
+	uint32_t structure_size:16;
+	uint32_t reserved:16;
 }SMB2_TREE_DISCONNECT_RESPONSE, PSMB2_TREE_DISCONNECT_RESPONSE;
 
 /* The different SMB2 OPLOCK types */
@@ -322,19 +322,19 @@ typedef struct SMB2_Tree_Disconnect_Response {
  * header and this request structure.
  */
 typedef struct SMB2_Create_Request {
-	uint16_t structure_size;
-	uint16_t security_flags:8;
-	uint16_t requested_oplock_lvl:8;
+	uint32_t structure_size:16;
+	uint32_t security_flags:8;
+	uint32_t requested_oplock_lvl:8;
 	uint32_t impersonation_lvl;
-	uint64_t smb_create_flags; // MUST NOT BE USED, server ignore, client 0
-	uint64_t reserved;
+	uint32_t smb_create_flags[1]; // MUST NOT BE USED, server ignore, client 0
+	uint32_t reserved[1];
 	uint32_t desired_access;
 	uint32_t file_attr;
 	uint32_t share_access;
 	uint32_t create_disposition; // defines server required actions
 	uint32_t create_options;
-	uint16_t name_offset;
-	uint16_t name_length;
+	uint32_t name_offset:16;
+	uint32_t name_length:16;
 	uint32_t create_contexts_offset;
 	uint32_t create_contexts_length;
 	/*
@@ -345,7 +345,7 @@ typedef struct SMB2_Create_Request {
 	 * normalization if needed) MUST conform to the relative pathname 
 	 * specified in the MS-FCC specification
 	 */
-	void *buffer;
+	uint32_t *buffer;
 }SMB2_CREATE_REQUEST, PSMB2_CREATE_REQUEST;
 
 /* SMB2_ACCESS_MASK_ENCODING
@@ -409,11 +409,11 @@ uint32_t DIRECTORY_ACCESS_MASK;
  */
 typedef struct SMB2_Create_Context_Request {
 	uint32_t next;
-	uint16_t name_offset;
-	uint16_t name_length;
-	uint16_t reserved;
-	uint16_t data_offset;
-	uint16_t data_length;
+	uint32_t name_offset:16;
+	uint32_t name_length:16;
+	uint32_t reserved:16;
+	uint32_t data_offset:16;
+	uint32_t data_length;
 	/*
 	 * variable-length buffer that contains the name and data fields, as
 	 * defined by name_offset, name_length, data_offset, and data_length.
@@ -421,18 +421,14 @@ typedef struct SMB2_Create_Context_Request {
 	 * the context values defined above. The structure name indicates what
 	 * info is encoded by the data payload.
 	 */
-	void *buffer;
+	uint32_t *buffer;
 }SMB2_CREATE_CONTEXT_REQUEST, PSMB2_CREATE_CONTEXT_REQUEST;
 
 typedef struct SMB2_Create_Durable_Handle_Request {
 	/* 16 byte field that MUST NOT be used and MUST be reserved. Must be
 	 * set to 0 by client and ignored by server.
 	 */
-	uint128_t durable_request;
-}SMB2_CREATE_DURABLE_HANDLE_REQUEST, PSMB2_CREATE_DURABLE_HANDLE_REQUEST;
-
-typedef struct SMB2_Create_Durable_Handle_Request {
-	SMB2_FILEID data; // needs to be an SMB2_FILEID structure
+	uint32_t durable_request[3];
 }SMB2_CREATE_DURABLE_HANDLE_REQUEST, PSMB2_CREATE_DURABLE_HANDLE_REQUEST;
 
 typedef struct SMB2_Create_Durable_Handle_Reconnect {
