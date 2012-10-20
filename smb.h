@@ -57,7 +57,8 @@ typedef struct SMB2_Negotiate_Request {
 }SMB2_NEGOTIATE_REQUEST, PSMB2_NEGOTIATE_REQUEST;
 
 /*
- * The following defines are used to specify the protocols capabilities for the  * server. The capabilities field must use the defines below.
+ * The following defines are used to specify the protocols capabilities for the
+ * server. The capabilities field must use the defines below.
  */
 #define SMB2_GLOBAL_CAP_DFS 0x00000001
 #define SMB2_GLOBAL_CAP_LEASING 0x00000002
@@ -879,3 +880,211 @@ typedef struct SMB2_Oplock_Break_Response {
 	SMB2_FILEID file_id;
 }SMB2_OPLOCK_BREAK_RESPONSE, PSMB2_OPLOCK_BREAK_RESPONSE;
 
+/* SMB2_LEASE_BREAK_RESPONSE
+ * The SMB2_LEASE_RESPONSE packet is sent by the server in response to
+ * SMB2_LEASE_BREAK_ACK from the client. This response is not valid for the
+ * SMB 2.002 dialect.
+ */
+typedef struct SMB2_Lease_Break_Response {
+    uint32_t structure_size:16;
+    uint32_t reserved:16;
+    uint32_t lease_key[3];
+    uint32_t lease_state;
+    uint32_t lease_duration[1];
+}SMB2_LEASE_BREAK_RESPONSE, PSMB2_LEASE_BREAK_RESPONSE;
+
+/* SMB2_LOCK_REQUEST
+ * The SMB2 LOCK request packet is sent by the client to either lock or
+ * unlock portions of a file. Several different segments of the file can be
+ * affected with a single SMB2_LOCK_REQUEST packet, but they all MUST be within
+ * the same file. 
+ *
+ * Byte range locks in SMB2 are associated with the handle (SMB2_FILEID) on which
+ * the lock is taken. Read/Write/lock requests using the same SMB2_FILEID will
+ * not conflict. However, I/O on a different handle (a different SMB2_FILEID)
+ * will conflict. It is the client's responsibility to locally resolve lock
+ * conflict across multiple processes on the same client, if any conflicts exist.
+ */
+typedef struct SMB2_Lock_Request {
+    /* Client MUST set to 48, indicates size of an SMB2_LOCK_REQUEST with a single
+     * SMB2_LOCK_ELEMENT structure. This value is set regardless of the # of locks
+     * sent.
+     */
+    uint32_t structure_size:16;
+    uint32_t lock_count:16; // Must be set to # of SMB2_LOCK_ELEMENT structs
+    uint32_t lock_sequence;
+    SMB2_FILEID file_id;
+    uint32_t locks[1];
+}SMB2_LOCK_REQUEST, PSMB2_LOCK_REQUEST;
+
+/* SMB2_LOCK_ELEMENT
+ * The SMB2 Lock element structure is used by the SMB2_LOCK_REQUEST to indicate
+ * segments of files that should be locked or unlocked.
+ */
+#define SMB2_LOCKFLAG_SHARED_LOCK 0x00000001
+#define SMB2_LOCKFLAG_EXCLUSIVE_LOCK 0x00000002
+#define SMB2_LOCKFLAG_UNLOCK 0x00000004
+#define SMB2_LOCKFLAG_FAIL_IMMEDIATELY 0x00000010
+
+typedef struct SMB2_Lock_Element {
+    uint32_t offset[1];
+    uint32_t length[1];
+    uint32_t flags;
+    uint32_t reserved;
+}SMB2_LOCK_ELEMENT, PSMB2_LOCK_ELEMENT;
+
+/* SMB2_LOCK_RESPONSE
+ * The SMB2 Lock Response packet is sent by the server in response to an
+ * SMB2_LOCK_REQUEST packet. This response is composed of an SMB2 header followed
+ * by the SMB2_LOCK_RESPONSE.
+ */
+typedef struct SMB2_Lock_Response {
+    uint32_t structure_size:16;
+    uint32_t reserved:16;
+}SMB2_LOCK_RESPONSE, PSMB2_LOCK_RESPONSE;
+
+/* SMB2_ECHO_REQUEST
+ * The SMB2 ECHO Request packet is sent by a client to determin whether a server
+ * a server is processing requests. This request consists of an SMB2 header
+ * followed by the SMB2_ECHO_REQUEST.
+ */
+typedef struct SMB2_Echo_Request {
+    uint32_t structure_size:16;
+    uint32_t reserved:16;
+}SMB2_ECHO_REQUEST, PSMB2_ECHO_REQUEST;
+
+/* SMB2_ECHO_RESPONSE
+ * The SMB2 ECHO Response packet is sent by the server to confirm that an
+ * SMB2_ECHO_REQUEST was processed successfully. This response is composed SMB2
+ * header followed SMB2_ECHO_RESPONSE.
+ */
+typedef struct SMB2_Echo_Response {
+    uint32_t structure_size:16;
+    uint32_t reserved:16;
+}SMB2_ECHO_RESPONSE, PSMB2_ECHO_RESPONSE;
+
+/* SMB2_CANCEL_REQUEST
+ * This packet is sent by the client to cance a previously sent message on the same
+ * SMB2 transport connection message_id of the request to be canceled MUST be set
+ * in the SMB2 header of the request. The request is composed of an SMB2 header and
+ * an SMB2_CANCEL_REQUEST structure.
+ */
+typedef struct SMB2_Cancel_Request {
+    uint32_t structure_size:16;
+    uint32_t reserved;
+}SMB2_CANCEL_REQUEST, PSMB2_CANCEL_REQUEST;
+
+/* SMB2_IOCTL_REQUEST
+ * The SMB2 IOCTL request packet is sent by a client to issue an
+ * implementation-specific file system coontrol or device control (FSCTL/IOCTL)
+ * command across the network. This request is composed of an SMB2 header and
+ * SMB2_IOCTL_REQUEST structure.
+ */
+#define FSCTL_DFS_GET_REFERRALS 0x00060194
+#define FSCTL_PIPE_PEEK 0x0011400C
+#define FSCTL_PIPE_WAIT 0x00110018
+#define FSCTL_PIPE_TRANSCEIVE 0x0011C017
+#define FSCTL_SRV_COPYCHUNK 0x01440F2 // for server side copy
+#define FSCTL_SRV_ENUMERATE_SNAPSHOTS 0x00144064
+#define FSCTL_SRV_REQUEST_RESUME_KEY 0x00140078
+#define FSCTL_SRV_READ_HASH 0x001441bb
+#define FSCTL_SRV_COPYCHUNK_WRITE 0x001480F2 // for server side copy
+#define FSCTL_LMR_REQUEST_RESILIENCY 0x001401D4
+#define FSCTL_QUERY_NETWORK_INTERFACE_INFO 0x001401FC
+#define FSCTL_SET_REPARSE_POINT 0x000900A4
+#define FSCTL_DFS_GET_REFERRALS_EX 0x000601B0
+#define FSCTL_FILE_LEVEL_TRIM 0x0009820B
+#define FSCTL_VALIDATE_NEGOTIATE_INFO 0x00140204
+
+#define SMB2_0_IOCTL_IS_FSCTL 0x00000001
+
+typedef struct SMB2_IOCTL_Request {
+    uint32_t structure_size:16;
+    uint32_t reserved:16;
+    uint32_t ctl_code;
+    SMB2_FILEID file_id;
+    uint32_t input_offset;
+    uint32_t input_count;
+    uint32_t output_offset;
+    uint32_t output_count;
+    uint32_t max_output_response;
+    uint32_t flags;
+    uint32_t reserved2;
+    
+    uint32_t *buffer;
+}SMB2_IOCTL_REQUEST, PSMB2_IOCTL_REQUEST;
+
+/* SRV_COPYCHUNK_COPY
+ * The SRV_COPYCHUNK_COPY packet is sent in an SMB2_IOCTL_REQUEST by the client to
+ * initiate a server-side copy of data. It is set as the contents of the input
+ * data buffer.
+ */
+typedef struct Srv_CopyChunk_Copy {
+    uint32_t source_key[5];
+    uint32_t chunk_count;
+    uint32_t reserved;
+    
+    /* An array of packets specifying range to be copied. This array must be of
+     * a length equal to chunk_count * size of SRV_COPYCHUNK.
+     */
+    uint32_t *chunks;
+}SRV_COPYCHUNK_COPY, PSRV_COPYCHUNK_COPY;
+
+/* SRV_COPYCHUNK
+ * The SRV_COPYCHUNK packet is sent in the chunks array of a SRV_COPYCHUNK_COPY
+ * packet to describe an individual data range to copy.
+ */
+typedef struct Srv_CopyChunk {
+    uint32_t source_offset[1];
+    uint32_t target_offset[1];
+    uint32_t length;
+    uint32_t reserved;
+}SRV_COPYCHUNK, PSRV_COPYCHUNK;
+
+/* SRV_READ_HASH_REQUEST
+ * The SRV_READ_HASH_REQUEST is sent to the server by the client in an 
+ * SMB2_IOCTL_REQUEST FSCTL_SRV_READ_HASH to retrieve the data from the Content
+ * Information File associated with a specified file. The request is valid only
+ * for the SMB 2.1 and 3.0 dialects. It is set as contents of the input data
+ * buffer.
+ */
+#define SRV_HASH_TYPE_PEER_DIST 0x00000001
+#define SRV_HASH_VER_1 0x00000001
+#define SRV_HASH_VER_2 0x00000002
+#define SRV_HASH_RETRIEVE_HASH_BASED 0x00000001
+#define SRV_HASH_RETRIEVE_FILE_BASED 0x00000002
+
+typedef struct Srv_Read_Hash_Request {
+    uint32_t hash_type;
+    uint32_t hash_version;
+    uint32_t hash_retrieval_type;
+    uint32_t length;
+    uint32_t offset[1];
+}SRV_READ_HASH_REQUEST, PSRV_READ_HASH_REQUEST;
+
+/* NETWORK_RESILIENCY_REQUEST
+ * The NETWORK_RESILIENCY_REQUEST request packet is sent to the server by the 
+ * client in an SMB2_IOCTL_REQUEST FSCTL_LMR_REQUEST_RESILIENCY to request 
+ * resiliency for a specified open file. This request is not valid for the 
+ * SMB 2.002 dialect. It is set as the contents of the input buffer. 
+ */
+typedef struct Network_Resiliency_Request {
+    uint32_t timeout;
+    uint32_t reserved;
+}NETWORK_RESILIENCY_REQUEST, PNETWORK_RESILIENCY_REQUEST;
+
+/* VALIDATE_NEGOTIATE_INFO_REQUEST
+ * The VALIDATE_NEGOTIATE_INFO_REQUEST packet is sent to the server by the client
+ * in an SMB2_IOCTL_REQUEST FSCTL_VALIDATE_NEGOTIATE_INFO to request validation
+ * of a previous SMB2_NEGOTIATE. The request is valid for clients and servers which
+ * implement the SMB 3.0 dialect.
+ */
+typedef struct Validate_Negotiate_Info_Request {
+    uint32_t capabilities;
+    uint32_t guid[3]; // the guid of the client
+    uint32_t security_mode:16;
+    uint32_t dialect_count:16;
+    
+    uint32_t *dialects;
+}VALIDATE_NEGOTIATE_INFO_REQUEST, PVALIDATE_NEGOTIATE_INFO_REQUEST;
+ 
