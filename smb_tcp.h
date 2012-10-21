@@ -12,28 +12,22 @@
 #include <string>
 #include <unistd.h>
 #include <sys/socket.h>
-#include <net/if.h>
 
-/*
- * This is the base class for the SMB_TCP logic.
- * All network logic will utilize this class
- */
-class SMB3_Tcp
+class SMB_TCP
 {
-        public:
-                SMB_Tcp();
-                ~SMB3_Tcp();
-                SMB3_Tcp(SMB_Tcp &SMB_Tcp const);
-                int socket_init(int port);
-                
-
-        private:
-                int tcp_port;
-                int err;
-                char *smb_error_msg;
-                
-
-
+public:
+    SMB_TCP();
+    ~SMB_TCP();
+    SMB_TCP(SMB_TCP& OtherCopy);
+    char ip_address[3];
+    int port;
+    char mac_address[3];
+    
+private:
+    bool isIPv4;
+    bool isIPv6;
+    bool is_network_up(int port);
 
 
-};
+
+}SMB_TCP, PSMB_TCP;
