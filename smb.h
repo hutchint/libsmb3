@@ -1087,4 +1087,52 @@ typedef struct Validate_Negotiate_Info_Request {
     
     uint32_t *dialects;
 }VALIDATE_NEGOTIATE_INFO_REQUEST, PVALIDATE_NEGOTIATE_INFO_REQUEST;
- 
+
+/* SMB2_IOCTL_RESPONSE
+ * The SMB2 IOCTL Response packet is sent by server to transmit the results of a 
+ * client SMB2_IOCTL_REQUEST. This response consists of an SMB2 header and the
+ * SMB2_IOCTL_RESPONSE structure.
+ */
+typedef struct SMB2_Ioctl_Response {
+    uint32_t structure_size:16;
+    uint32_t reserved:16;
+    uint32_t ctl_code;
+    SMB2_FILEID file_id;
+    uint32_t input_offset;
+    uint32_t input_count;
+    uint32_t output_offset;
+    uint32_t output_count;
+    uint32_t flags;
+    uint32_t reserved2;
+    
+    uint32_t *buffer;
+}SMB2_IOCTL_RESPONSE, PSMB2_IOCTL_RESPONSE;
+
+/* SRV_COPYCHUNK_RESPONSE
+ * The SRV_COPYCHUNK_RESPONSE packet is sent in an SMB2_IOCTL_RESPONSE by the
+ * server to return the results of a server-side copy operation. It is placed in
+ * the buffer field of the SMB2_IOCTL_RESPONSE packet.
+ */
+typedef struct Srv_Copychunk_Response {
+    uint32_t chunks_written;
+    uint32_t chunk_bytes_written;
+    uint32_t total_bytes_written;
+}SRV_COPYCHUNK_RESPONSE, PSRV_COPYCHUNK_RESPONSE;
+
+/* SRV_SNAPSHOT_ARRAY
+ * The SRV_SNAPSHOT_ARRAY packet is returned to the client by the server in an
+ * SMB2_IOCTL_RESPONSE for the FSCTL_SRV_ENUMERATE_SNAPSHOTS request. This packet
+ * MUST contain all the revision time-stamps that are associated with the Tree
+ * connect share in which the open resides, provided that the buffer size required
+ * is less than or equal to the maximum output buffer size received in the
+ * SMB2_IOCTL_REQUESST. The SRV_SNAPSHOT_ARRAY is placed in the buffer field in the
+ * SMB2_IOCTL_RESPONSE and the output_offset and the output_count fields MUST be
+ * updated to describe the buffer as specified.
+ */
+typedef struct Srv_Snapshot_Array {
+    uint32_t number_of_snapshots;
+    uint32_t number_of_snapshots_returned;
+    uint32_t snapshot_array_size;
+    uint32_t *snapshots; // an array of time stamps in GMT format
+}SRV_SNAPSHOT_ARRAY, PSRV_SNAPSHOT_ARRAY;
+
