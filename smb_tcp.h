@@ -11,6 +11,7 @@
 #include <iostream>
 #include <string>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 /* Purpose: Base class that manages some of the TCP networking
@@ -23,20 +24,18 @@ public:
     SMB_TCP();
     ~SMB_TCP();
     SMB_TCP(SMB_TCP& OtherCopy);
-    char ip_address[3];
-    int port;
+    sockaddr *address;
+    int socket(int domain, int sock_type, int protocol);
     char mac_address[3];
     char protocol;
     char type; // Will be set to SOCK_STREAM in constructor
     
     // Methods
-    int connect(char *ip, int port, char type, char protocol);
-    int disconnect(char *ip, int port, char type, char protocol);
-    int listen();
-    int send();
-    int recv(int socket, void *r_buf, size_t length, int flags,
-             struct *sockaddr *restrict address, socklen_t *restrict address_len));
-    int 
+    int connect(int socket, const struct sockaddr *address, socklen_t addr_len);
+    int close(
+    int listen(int socket, int backlog);
+    int send(int socket, const void *buffer, size_t length, int flags);
+    int recieve(int socket, void *buffer, size_t length, int flags);
     
     
 private:
